@@ -210,8 +210,8 @@
         const QUESTIONS = [
             {
                 id: 'q1',
-                text: "מה הכי חשוב לך עכשיו?",
-                type: 'single',
+                text: "מה הכי חשוב לך עכשיו? (ניתן לבחור מספר אפשרויות)",
+                type: 'multi', // Changed from single to multi
                 options: [
                     { val: 'hair', text: 'הסרת שיער (פנים/גוף)' },
                     { val: 'brows', text: 'עיצוב גבות' },
@@ -225,7 +225,7 @@
                 id: 'q2', // Hair path
                 text: "איזה אזור בגוף?",
                 type: 'single',
-                condition: (answers) => answers.q1 === 'hair',
+                condition: (answers) => answers.q1 && answers.q1.includes('hair'),
                 options: [
                     { val: 'face', text: 'פנים' },
                     { val: 'body', text: 'גוף' },
@@ -237,7 +237,7 @@
                 id: 'q3', // Brows path
                 text: "מה הסגנון שאת אוהבת?",
                 type: 'single',
-                condition: (answers) => answers.q1 === 'brows',
+                condition: (answers) => answers.q1 && answers.q1.includes('brows'),
                 options: [
                     { val: 'natural', text: 'טבעי ועדין' },
                     { val: 'defined', text: 'מוגדר ומסודר' },
@@ -248,7 +248,7 @@
                 id: 'q4', // Face path start
                 text: "איך היית מתארת את העור שלך?",
                 type: 'single',
-                condition: (answers) => ['glow', 'anti_aging', 'texture', 'basic'].includes(answers.q1),
+                condition: (answers) => answers.q1 && answers.q1.some(r => ['glow', 'anti_aging', 'texture', 'basic'].includes(r)),
                 options: [
                     { val: 'dry', text: 'יבש' },
                     { val: 'oily', text: 'שמן' },
@@ -262,9 +262,9 @@
                 text: "מה הכי מפריע לך בעור? (ניתן לבחור עד 2)",
                 type: 'multi',
                 maxSelect: 2,
-                condition: (answers) => ['glow', 'anti_aging', 'texture', 'basic'].includes(answers.q1),
+                condition: (answers) => answers.q1 && answers.q1.some(r => ['glow', 'anti_aging', 'texture', 'basic'].includes(r)),
                 options: [
-                    { val: 'pimples', text: 'פצעונים / סתימות' },
+                    { val: 'pimples', text: 'פצעונים' },
                     { val: 'dryness', text: 'יובש / קילופים' },
                     { val: 'oil', text: 'שומניות / ברק' },
                     { val: 'pigment', text: 'כתמים / פיגמנטציה' },
@@ -278,7 +278,7 @@
                 id: 'q6', // Face Event
                 text: "יש אירוע או דדליין חשוב בקרוב?",
                 type: 'single',
-                condition: (answers) => ['glow', 'anti_aging', 'texture', 'basic'].includes(answers.q1),
+                condition: (answers) => answers.q1 && answers.q1.some(r => ['glow', 'anti_aging', 'texture', 'basic'].includes(r)),
                 options: [
                     { val: 'week', text: 'כן, תוך שבוע' },
                     { val: 'month', text: 'כן, תוך חודש' },
@@ -289,7 +289,7 @@
                 id: 'q7', // Face Downtime
                 text: "כמה חשוב לך טיפול בלי זמן החלמה?",
                 type: 'single',
-                condition: (answers) => ['glow', 'anti_aging', 'texture', 'basic'].includes(answers.q1),
+                condition: (answers) => answers.q1 && answers.q1.some(r => ['glow', 'anti_aging', 'texture', 'basic'].includes(r)),
                 options: [
                     { val: 'strict', text: 'חשוב לי בלי אדמומיות כמעט בכלל' },
                     { val: 'mild', text: 'בסדר גם אם יש אדמומיות קלה יום-יומיים' },
@@ -383,7 +383,8 @@
                 if (current.includes(value)) {
                     current = current.filter(v => v !== value);
                 } else {
-                    if (current.length < question.maxSelect) {
+                    // Max Select logic check
+                    if (!question.maxSelect || current.length < question.maxSelect) {
                         current.push(value);
                     }
                 }
@@ -437,23 +438,30 @@
             let reasons = [];
             let expectation = "";
 
-            const q1 = answers.q1;
+            // Q1 is now an array. We need to prioritize the recommendation.
+            // Priority: Anti-Aging > Texture > Glow > Basic > Hair > Brows
+            const q1Selections = Array.isArray(answers.q1) ? answers.q1 : [answers.q1];
+            
+            const priorityMap = ['anti_aging', 'texture', 'glow', 'basic', 'hair', 'brows'];
+            // Find the highest priority selection present in the user's answers
+            const primaryType = priorityMap.find(p => q1Selections.includes(p)) || q1Selections[0];
 
-            if (q1 === 'hair') {
+            // MAIN LOGIC
+            if (primaryType === 'hair') {
                 primary = TREATMENTS.WAX;
                 const area = answers.q2 === 'face' ? 'בפנים' : (answers.q2 === 'body' ? 'בגוף' : 'בפנים ובגוף');
                 reasons.push(`ציינת שחשוב לך הסרת שיער ${area}.`);
                 reasons.push("שיטות השעווה שלנו עדינות ומותאמות גם לעור רגיש.");
                 expectation = "עור חלק ונעים למגע מיידית לאחר הטיפול.";
             }
-            else if (q1 === 'brows') {
+            else if (primaryType === 'brows') {
                 primary = TREATMENTS.BROWS;
                 const style = answers.q3 === 'natural' ? 'טבעי ועדין' : 'מוגדר ומסודר';
                 reasons.push(`את מעדיפה מראה ${style}.`);
                 reasons.push("אנו מתאימים את צורת הגבה למבנה הפנים שלך בדיוק.");
                 expectation = "מסגרת מחמיאה לפנים שתדגיש את העיניים שלך.";
             }
-            else if (q1 === 'glow') {
+            else if (primaryType === 'glow') {
                 primary = TREATMENTS.GLOW;
                 reasons.push("ביקשת לרענן את העור ולהעניק לו חיוניות.");
                 if (answers.q6 === 'week' || answers.q6 === 'month') {
@@ -468,7 +476,7 @@
                     };
                 }
             }
-            else if (q1 === 'anti_aging') {
+            else if (primaryType === 'anti_aging') {
                 primary = TREATMENTS.ANTI_AGING;
                 reasons.push("התמקדות במיצוק, החלקת קמטוטים וחידוש העור.");
                 expectation = "עור מוצק יותר ושיפור במרקם לאורך זמן.";
@@ -483,7 +491,7 @@
                     };
                 }
             }
-            else if (q1 === 'texture') {
+            else if (primaryType === 'texture') {
                 if (answers.q7 === 'strict') {
                     primary = TREATMENTS.CLASSIC;
                     reasons.push("ביקשת טיפול לשיפור המרקם ללא זמן החלמה או אדמומיות.");
@@ -501,7 +509,7 @@
                     expectation = "ייתכן אדמומיות קלה למשך 24-48 שעות, שלאחריהן יתגלה עור חדש וחלק יותר.";
                 }
             }
-            else if (q1 === 'basic') {
+            else if (primaryType === 'basic') {
                 primary = TREATMENTS.CLASSIC;
                 reasons.push("הבסיס הטוב ביותר לשמירה על בריאות העור לאורך זמן.");
                 reasons.push("ניקוי עמוק והזנה המותאמים אישית למצב העור שלך.");
@@ -512,6 +520,29 @@
                         title: TREATMENTS.GLOW,
                         reason: "מכיוון שציינת חוסר זוהר, טיפול הזוהר יכול להיות תוספת אנרגיה מצוינת לעור."
                     };
+                }
+            }
+
+            // FALLBACK SECONDARY LOGIC
+            // If the user selected multiple options in Q1, and the code above didn't already
+            // generate a specific secondary recommendation (like sensitive skin logic),
+            // then use the user's second choice as the secondary recommendation.
+            if (!secondary && q1Selections.length > 1) {
+                const secondChoice = q1Selections.find(c => c !== primaryType);
+                if (secondChoice) {
+                     // Simple mapping for fallback secondary
+                     const fallbackMap = {
+                         'hair': { title: TREATMENTS.WAX, reason: "בנוסף, ציינת שאת מעוניינת בהסרת שיער." },
+                         'brows': { title: TREATMENTS.BROWS, reason: "בנוסף, ציינת שאת מעוניינת בעיצוב גבות." },
+                         'glow': { title: TREATMENTS.GLOW, reason: "אפשרות נוספת לרענון וזוהר לפני אירועים." },
+                         'basic': { title: TREATMENTS.CLASSIC, reason: "לשמירה על שגרה בריאה וניקיון בסיסי." },
+                         'anti_aging': { title: TREATMENTS.ANTI_AGING, reason: "לטיפול ממוקד בסימני גיל ומיצוק." },
+                         'texture': { title: TREATMENTS.MICRONEEDLING, reason: "לשיפור עמוק של מרקם העור וצלקות." }
+                     };
+                     
+                     if (fallbackMap[secondChoice]) {
+                         secondary = fallbackMap[secondChoice];
+                     }
                 }
             }
 
