@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moriel Cosmetics - התאמת טיפול אישית</title>
+    <!-- Tailwind CSS for rapid styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Heebo Font for modern Hebrew typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        moriel: {
+                            gold: '#D4A430',
+                            goldLight: '#E5C165',
+                            dark: '#1A1A1A',
+                            gray: '#F9F9F9',
+                            text: '#333333'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Heebo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles for Moriel Look & Feel */
+        body {
+            font-family: 'Heebo', sans-serif;
+            color: #333;
+            background-color: #FAFAFA; /* Light background for the standalone page */
+        }
+
+        .btn-primary {
+            background-color: #D4A430;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #B58B24;
+            transform: translateY(-1px);
+        }
+
+        .option-card {
+            border: 1px solid #E5E5E5;
+            transition: all 0.2s ease;
+        }
+        .option-card:hover {
+            border-color: #D4A430;
+            box-shadow: 0 4px 12px rgba(212, 164, 48, 0.1);
+        }
+        .option-card.selected {
+            border-color: #D4A430;
+            background-color: #FFFCF2;
+            box-shadow: 0 0 0 1px #D4A430;
+        }
+
+        /* Smooth fade transitions */
+        .fade-in {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Checkbox custom style */
+        .custom-checkbox:checked {
+            background-color: #D4A430;
+            border-color: #D4A430;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen items-center justify-center p-4">
+
+    <!-- Main Content Area -->
+    <main class="w-full max-w-xl" id="quiz-container">
+        
+        <!-- INTRO SCREEN -->
+        <div id="intro-screen" class="bg-white p-8 rounded-xl shadow-lg text-center fade-in border-t-4 border-moriel-gold">
+            <!-- Branding (Added since header is removed) -->
+            <div class="mb-6">
+                <img src="Moriel-Cosmetics-Logo.png" alt="Moriel Cosmetics" class="mx-auto h-12 md:h-14 w-auto">
+            </div>
+
+            <h1 class="text-3xl font-bold text-moriel-dark mb-4">כי כל עור מספר סיפור אחר</h1>
+            <p class="text-lg text-gray-600 mb-8 leading-relaxed">
+                בואי נמצא את הטיפול שהכי מתאים לעור שלך — בכמה שאלות קצרות.
+                אבחון מקצועי ומהיר לתוצאות מדויקות.
+            </p>
+            <button onclick="startQuiz()" class="btn-primary w-full md:w-auto px-12 py-3 rounded-full text-lg font-medium shadow-md">
+                מתחילים
+            </button>
+        </div>
+
+        <!-- QUIZ SCREEN -->
+        <div id="quiz-screen" class="hidden bg-white rounded-xl shadow-lg overflow-hidden fade-in">
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-100 h-2">
+                <div id="progress-bar" class="bg-moriel-gold h-2 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            
+            <div class="p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <span id="step-indicator" class="text-xs font-bold text-moriel-gold tracking-widest uppercase">שאלה 1</span>
+                </div>
+
+                <h2 id="question-text" class="text-2xl font-bold text-gray-800 mb-6 min-h-[64px]">
+                    <!-- JS Injected -->
+                </h2>
+
+                <div id="options-container" class="space-y-3 mb-8">
+                    <!-- JS Injected Options -->
+                </div>
+
+                <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-100">
+                    <button onclick="prevStep()" id="btn-back" class="text-gray-400 text-sm hover:text-gray-600 px-4 py-2 hidden">חזרה</button>
+                    <button onclick="nextStep()" id="btn-next" class="btn-primary px-8 py-2.5 rounded-full shadow-md text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        הבא
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS SCREEN -->
+        <div id="result-screen" class="hidden w-full fade-in">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold text-moriel-dark">זה הטיפול שהכי מתאים לך</h2>
+                <p class="text-gray-500 mt-2">על סמך התשובות שלך</p>
+            </div>
+
+            <!-- Primary Recommendation -->
+            <div class="bg-white rounded-xl shadow-lg border-t-4 border-moriel-gold overflow-hidden mb-6">
+                <div class="p-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                        <h3 id="primary-treatment-title" class="text-2xl font-bold text-moriel-dark">
+                            <!-- JS Injected -->
+                        </h3>
+                        <span class="bg-yellow-50 text-moriel-gold text-xs font-bold px-3 py-1 rounded-full mt-2 md:mt-0 border border-yellow-100">התאמה מושלמת</span>
+                    </div>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">למה זה מתאים לך?</h4>
+                            <ul id="primary-reasons" class="space-y-2 text-gray-700">
+                                <!-- JS Injected -->
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="text-sm font-bold text-moriel-dark mb-1">מה לצפות?</h4>
+                            <p id="primary-expectation" class="text-sm text-gray-600">
+                                <!-- JS Injected -->
+                            </p>
+                        </div>
+                    </div>
+
+                    <button onclick="bookTreatment()" class="btn-primary w-full py-3 rounded-lg font-bold text-lg shadow-lg mb-3">
+                        לקביעת ייעוץ / תור באתר
+                    </button>
+                </div>
+            </div>
+
+            <!-- Secondary Recommendation (Optional) -->
+            <div id="secondary-card" class="hidden bg-white rounded-xl shadow border border-gray-100 p-6 mb-6 opacity-90">
+                <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">אופציה נוספת שכדאי לשקול</h4>
+                <h3 id="secondary-title" class="text-xl font-bold text-moriel-dark mb-2"></h3>
+                <p id="secondary-reason" class="text-sm text-gray-600 mb-4"></p>
+                <button onclick="bookTreatment(true)" class="text-moriel-gold font-bold text-sm hover:underline">לבחור באפשרות זו &larr;</button>
+            </div>
+
+            <!-- Free Consult Teaser -->
+            <div class="bg-moriel-dark text-white rounded-xl p-6 flex flex-col md:flex-row items-center justify-between shadow-lg">
+                <div class="mb-4 md:mb-0">
+                    <h4 class="font-bold text-lg">עדיין מתלבטת?</h4>
+                    <p class="text-gray-300 text-sm">רוצה התאמה מדויקת לפי אבחון עור מעמיק?</p>
+                </div>
+                <button onclick="bookConsult()" class="border border-white text-white px-6 py-2 rounded-full hover:bg-white hover:text-moriel-dark transition-colors text-sm font-medium whitespace-nowrap">
+                    פגישת ייעוץ חינם
+                </button>
+            </div>
+
+            <div class="text-center mt-8">
+                <a href="https://morielcosmetics.com/" class="text-gray-400 hover:text-moriel-gold text-sm underline">חזרה לאתר הראשי</a>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+        // --- CONSTANTS & CONFIG ---
+        const TREATMENTS = {
+            CONSULT: "פגישת ייעוץ אישית – ללא עלות",
+            WAX: "שעוות בכל חלקי הגוף/ פנים",
+            BROWS: "עיצוב גבות בשעווה/ חוט",
+            ANTI_AGING: "טיפול אנטי אייג’ינג",
+            MICRONEEDLING: "טיפול מיקרונידילינג",
+            CLASSIC: "טיפול פנים קלאסי",
+            GLOW: "טיפול זוהר"
+        };
+
+        const QUESTIONS = [
+            {
+                id: 'q1',
+                text: "מה הכי חשוב לך עכשיו?",
+                type: 'single',
+                options: [
+                    { val: 'hair', text: 'הסרת שיער (פנים/גוף)' },
+                    { val: 'brows', text: 'עיצוב גבות' },
+                    { val: 'glow', text: 'זוהר ורענון (לפני אירוע/להרגיש רעננה)' },
+                    { val: 'anti_aging', text: 'אנטי-אייג’ינג (מיצוק/קמטוטים)' },
+                    { val: 'texture', text: 'שיפור מרקם (צלקות/נקבוביות/פוסט אקנה)' },
+                    { val: 'basic', text: 'ניקוי וטיפוח בסיסי (שגרה בריאה לעור)' }
+                ]
+            },
+            {
+                id: 'q2', // Hair path
+                text: "איזה אזור בגוף?",
+                type: 'single',
+                condition: (answers) => answers.q1 === 'hair',
+                options: [
+                    { val: 'face', text: 'פנים' },
+                    { val: 'body', text: 'גוף' },
+                    { val: 'both', text: 'גם וגם' },
+                    { val: 'unsure', text: 'לא בטוחה' }
+                ]
+            },
+            {
+                id: 'q3', // Brows path
+                text: "מה הסגנון שאת אוהבת?",
+                type: 'single',
+                condition: (answers) => answers.q1 === 'brows',
+                options: [
+                    { val: 'natural', text: 'טבעי ועדין' },
+                    { val: 'defined', text: 'מוגדר ומסודר' },
+                    { val: 'unsure', text: 'לא בטוחה (אשמח שיתאימו לי)' }
+                ]
+            },
+            {
+                id: 'q4', // Face path start
+                text: "איך היית מתארת את העור שלך?",
+                type: 'single',
+                condition: (answers) => ['glow', 'anti_aging', 'texture', 'basic'].includes(answers.q1),
+                options: [
+                    { val: 'dry', text: 'יבש' },
+                    { val: 'oily', text: 'שמן' },
+                    { val: 'combo', text: 'מעורב' },
+                    { val: 'sensitive', text: 'רגיש' },
+                    { val: 'unsure', text: 'לא בטוחה' }
+                ]
+            },
+            {
+                id: 'q5', // Face specific
+                text: "מה הכי מפריע לך בעור? (ניתן לבחור עד 2)",
+                type: 'multi',
+                maxSelect: 2,
+                condition: (answers) => ['glow', 'anti_aging', 'texture', 'basic'].includes(answers.q1),
+                options: [
+                    { val: 'pimples', text: 'פצעונים / סתימות' },
+                    { val: 'dryness', text: 'יובש / קילופים' },
+                    { val: 'oil', text: 'שומניות / ברק' },
+                    { val: 'pigment', text: 'כתמים / פיגמנטציה' },
+                    { val: 'wrinkles', text: 'קמטוטים / חוסר מיצוק' },
+                    { val: 'dull', text: 'חוסר זוהר / עייפות' },
+                    { val: 'texture_scars', text: 'נקבוביות / מרקם / צלקות' },
+                    { val: 'unsure', text: 'לא בטוחה' }
+                ]
+            },
+            {
+                id: 'q6', // Face Event
+                text: "יש אירוע או דדליין חשוב בקרוב?",
+                type: 'single',
+                condition: (answers) => ['glow', 'anti_aging', 'texture', 'basic'].includes(answers.q1),
+                options: [
+                    { val: 'week', text: 'כן, תוך שבוע' },
+                    { val: 'month', text: 'כן, תוך חודש' },
+                    { val: 'no', text: 'לא' }
+                ]
+            },
+            {
+                id: 'q7', // Face Downtime
+                text: "כמה חשוב לך טיפול בלי זמן החלמה?",
+                type: 'single',
+                condition: (answers) => ['glow', 'anti_aging', 'texture', 'basic'].includes(answers.q1),
+                options: [
+                    { val: 'strict', text: 'חשוב לי בלי אדמומיות כמעט בכלל' },
+                    { val: 'mild', text: 'בסדר גם אם יש אדמומיות קלה יום-יומיים' },
+                    { val: 'none', text: 'לא משנה לי' }
+                ]
+            }
+        ];
+
+        // --- STATE ---
+        let currentStepIndex = 0;
+        let activeQuestions = [];
+        let answers = {};
+        
+        // --- ELEMENTS ---
+        const screens = {
+            intro: document.getElementById('intro-screen'),
+            quiz: document.getElementById('quiz-screen'),
+            result: document.getElementById('result-screen')
+        };
+        const els = {
+            progressBar: document.getElementById('progress-bar'),
+            stepIndicator: document.getElementById('step-indicator'),
+            questionText: document.getElementById('question-text'),
+            optionsContainer: document.getElementById('options-container'),
+            nextBtn: document.getElementById('btn-next'),
+            backBtn: document.getElementById('btn-back')
+        };
+
+        // --- INIT ---
+        function startQuiz() {
+            screens.intro.classList.add('hidden');
+            screens.quiz.classList.remove('hidden');
+            activeQuestions = [QUESTIONS[0]]; 
+            renderStep();
+        }
+
+        // --- CORE LOGIC ---
+        function renderStep() {
+            const q = activeQuestions[currentStepIndex];
+            
+            // UI Updates
+            els.stepIndicator.innerText = `שאלה ${currentStepIndex + 1}`;
+            els.progressBar.style.width = `${((currentStepIndex + 1) / 7) * 100}%`;
+            
+            // Animation reset
+            els.questionText.classList.remove('fade-in');
+            void els.questionText.offsetWidth; // trigger reflow
+            els.questionText.classList.add('fade-in');
+            
+            els.questionText.innerText = q.text;
+            els.optionsContainer.innerHTML = '';
+            
+            // Render Options
+            q.options.forEach(opt => {
+                const btn = document.createElement('div');
+                btn.className = `option-card cursor-pointer p-4 rounded-lg flex items-center gap-3 bg-white text-gray-700`;
+                btn.onclick = () => selectOption(q, opt.val, btn);
+                
+                // Content
+                let icon = '';
+                if (q.type === 'multi') {
+                    // Checkbox look
+                    const isSelected = (answers[q.id] || []).includes(opt.val);
+                    if(isSelected) btn.classList.add('selected');
+                    icon = `<div class="w-5 h-5 rounded border border-gray-300 flex items-center justify-center ${isSelected ? 'bg-moriel-gold border-moriel-gold' : ''}"><span class="text-white text-xs ${isSelected ? '' : 'hidden'}">✓</span></div>`;
+                } else {
+                    // Radio look
+                    const isSelected = answers[q.id] === opt.val;
+                    if(isSelected) btn.classList.add('selected');
+                    icon = `<div class="w-5 h-5 rounded-full border border-gray-300 flex items-center justify-center ${isSelected ? 'border-moriel-gold' : ''}"><div class="w-2.5 h-2.5 rounded-full bg-moriel-gold ${isSelected ? '' : 'hidden'}"></div></div>`;
+                }
+                
+                btn.innerHTML = `${icon}<span class="font-medium">${opt.text}</span>`;
+                els.optionsContainer.appendChild(btn);
+            });
+
+            // Button State
+            validateStep();
+            
+            // Back button visibility
+            els.backBtn.classList.toggle('hidden', currentStepIndex === 0);
+        }
+
+        function selectOption(question, value, btnElement) {
+            if (question.type === 'single') {
+                answers[question.id] = value;
+                renderStep();
+            } else {
+                // Multi select
+                let current = answers[question.id] || [];
+                if (current.includes(value)) {
+                    current = current.filter(v => v !== value);
+                } else {
+                    if (current.length < question.maxSelect) {
+                        current.push(value);
+                    }
+                }
+                answers[question.id] = current;
+                renderStep();
+            }
+        }
+
+        function validateStep() {
+            const q = activeQuestions[currentStepIndex];
+            const hasAnswer = answers[q.id] && (Array.isArray(answers[q.id]) ? answers[q.id].length > 0 : true);
+            els.nextBtn.disabled = !hasAnswer;
+        }
+
+        function nextStep() {
+            const currentQ = activeQuestions[currentStepIndex];
+            
+            // Find potential next questions
+            const nextPotentialIndex = QUESTIONS.findIndex((q, i) => {
+                if (QUESTIONS.indexOf(currentQ) >= i) return false;
+                if (q.condition && !q.condition(answers)) return false;
+                return true;
+            });
+
+            if (nextPotentialIndex !== -1) {
+                const nextQ = QUESTIONS[nextPotentialIndex];
+                if (!activeQuestions.includes(nextQ)) {
+                    activeQuestions.splice(currentStepIndex + 1, 0, nextQ);
+                }
+                currentStepIndex++;
+                renderStep();
+            } else {
+                finishQuiz();
+            }
+        }
+
+        function prevStep() {
+            if (currentStepIndex > 0) {
+                currentStepIndex--;
+                renderStep();
+            }
+        }
+
+        // --- SCORING SYSTEM ---
+        function finishQuiz() {
+            screens.quiz.classList.add('hidden');
+            screens.result.classList.remove('hidden');
+            
+            let primary = null;
+            let secondary = null;
+            let reasons = [];
+            let expectation = "";
+
+            const q1 = answers.q1;
+
+            if (q1 === 'hair') {
+                primary = TREATMENTS.WAX;
+                const area = answers.q2 === 'face' ? 'בפנים' : (answers.q2 === 'body' ? 'בגוף' : 'בפנים ובגוף');
+                reasons.push(`ציינת שחשוב לך הסרת שיער ${area}.`);
+                reasons.push("שיטות השעווה שלנו עדינות ומותאמות גם לעור רגיש.");
+                expectation = "עור חלק ונעים למגע מיידית לאחר הטיפול.";
+            }
+            else if (q1 === 'brows') {
+                primary = TREATMENTS.BROWS;
+                const style = answers.q3 === 'natural' ? 'טבעי ועדין' : 'מוגדר ומסודר';
+                reasons.push(`את מעדיפה מראה ${style}.`);
+                reasons.push("אנו מתאימים את צורת הגבה למבנה הפנים שלך בדיוק.");
+                expectation = "מסגרת מחמיאה לפנים שתדגיש את העיניים שלך.";
+            }
+            else if (q1 === 'glow') {
+                primary = TREATMENTS.GLOW;
+                reasons.push("ביקשת לרענן את העור ולהעניק לו חיוניות.");
+                if (answers.q6 === 'week' || answers.q6 === 'month') {
+                    reasons.push("זהו הטיפול האידיאלי כהכנה לאירוע הקרוב שלך.");
+                }
+                expectation = "עור קורן, רווי בלחות וזוהר מיידית.";
+
+                if (answers.q4 === 'sensitive') {
+                    secondary = {
+                        title: TREATMENTS.CLASSIC,
+                        reason: "מכיוון שהעור שלך רגיש, טיפול פנים קלאסי הוא אלטרנטיבה מרגיעה ומאזנת מצוינת."
+                    };
+                }
+            }
+            else if (q1 === 'anti_aging') {
+                primary = TREATMENTS.ANTI_AGING;
+                reasons.push("התמקדות במיצוק, החלקת קמטוטים וחידוש העור.");
+                expectation = "עור מוצק יותר ושיפור במרקם לאורך זמן.";
+
+                const hasTextureIssues = answers.q5 && answers.q5.includes('texture_scars');
+                const downtimeOK = answers.q7 !== 'strict';
+
+                if (hasTextureIssues && downtimeOK) {
+                    secondary = {
+                        title: TREATMENTS.MICRONEEDLING,
+                        reason: "מכיוון שציינת גם ענייני מרקם/צלקות, מיקרונידילינג יכול לתת תוצאה עוצמתית יותר לטווח הארוך."
+                    };
+                }
+            }
+            else if (q1 === 'texture') {
+                if (answers.q7 === 'strict') {
+                    primary = TREATMENTS.CLASSIC;
+                    reasons.push("ביקשת טיפול לשיפור המרקם ללא זמן החלמה או אדמומיות.");
+                    reasons.push("טיפול זה ינקה ויאזן את העור בעדינות.");
+                    expectation = "עור נקי, רגוע ומאוזן ללא גירוי.";
+                    
+                    secondary = {
+                        title: TREATMENTS.MICRONEEDLING,
+                        reason: "אם בעתיד תוכלי לאפשר יום-יומיים של אדמומיות, מיקרונידילינג הוא היעיל ביותר לצלקות ונקבוביות."
+                    };
+                } else {
+                    primary = TREATMENTS.MICRONEEDLING;
+                    reasons.push("הפתרון היעיל ביותר להחלקת מרקם, צמצום נקבוביות וטיפול בצלקות.");
+                    reasons.push("מעודד ייצור קולגן טבעי.");
+                    expectation = "ייתכן אדמומיות קלה למשך 24-48 שעות, שלאחריהן יתגלה עור חדש וחלק יותר.";
+                }
+            }
+            else if (q1 === 'basic') {
+                primary = TREATMENTS.CLASSIC;
+                reasons.push("הבסיס הטוב ביותר לשמירה על בריאות העור לאורך זמן.");
+                reasons.push("ניקוי עמוק והזנה המותאמים אישית למצב העור שלך.");
+                expectation = "תחושת ניקיון, רעננות ושיפור הספיגה של תכשירי הטיפוח שלך.";
+
+                if (answers.q5 && answers.q5.includes('dull')) {
+                    secondary = {
+                        title: TREATMENTS.GLOW,
+                        reason: "מכיוון שציינת חוסר זוהר, טיפול הזוהר יכול להיות תוספת אנרגיה מצוינת לעור."
+                    };
+                }
+            }
+
+            // Render Results
+            document.getElementById('primary-treatment-title').innerText = primary;
+            const reasonsHtml = reasons.map(r => `<li class="flex items-start"><span class="text-moriel-gold ml-2 text-lg">•</span><span>${r}</span></li>`).join('');
+            document.getElementById('primary-reasons').innerHTML = reasonsHtml;
+            document.getElementById('primary-expectation').innerText = expectation;
+
+            if (secondary) {
+                const secCard = document.getElementById('secondary-card');
+                secCard.classList.remove('hidden');
+                document.getElementById('secondary-title').innerText = secondary.title;
+                document.getElementById('secondary-reason').innerText = secondary.reason;
+                secCard.dataset.serviceName = secondary.title;
+            }
+        }
+
+        // --- BOOKING LOGIC ---
+        function bookTreatment(isSecondary = false) {
+            // Redirect to Moriel Cosmetics homepage
+            window.location.href = "https://morielcosmetics.com/";
+        }
+
+        function bookConsult() {
+            // Redirect to Moriel Cosmetics homepage
+            window.location.href = "https://morielcosmetics.com/";
+        }
+    </script>
+</body>
+</html>
